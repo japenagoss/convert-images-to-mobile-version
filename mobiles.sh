@@ -32,10 +32,22 @@ if [ -f  $file ]
                 cd /photomanager
                 mkdir smartphones
             fi
+
+            if [ ! -d "/photomanager/tablets" ]
+            then
+                cd /photomanager
+                mkdir tablets
+            fi
             
             if [ ! -d "/photomanager/smartphones/$user" ]
             then
                 cd /photomanager/smartphones
+                mkdir $user
+            fi
+
+            if [ ! -d "/photomanager/tablets/$user" ]
+            then
+                cd /photomanager/tablets
                 mkdir $user
             fi
 
@@ -45,9 +57,21 @@ if [ -f  $file ]
                 mkdir $year
             fi
 
+            if [ ! -d "/photomanager/tablets/$user/$year" ]
+            then
+                cd /photomanager/tablets/$user/
+                mkdir $year
+            fi
+
             if [ ! -d "/photomanager/smartphones/$user/$year/$month" ]
             then
                 cd /photomanager/smartphones/$user/$year
+                mkdir $month
+            fi
+
+            if [ ! -d "/photomanager/tablets/$user/$year/$month" ]
+            then
+                cd /photomanager/tablets/$user/$year
                 mkdir $month
             fi
 
@@ -57,9 +81,21 @@ if [ -f  $file ]
                 mkdir $day
             fi
 
+            if [ ! -d "/photomanager/tablets/$user/$year/$month/$day" ]
+            then
+                cd /photomanager/tablets/$user/$year/$month
+                mkdir $day
+            fi
+
             if [ ! -d "/photomanager/smartphones/$user/$year/$month/$day/$hour" ]
             then
                 cd /photomanager/smartphones/$user/$year/$month/$day
+                mkdir $hour
+            fi
+
+            if [ ! -d "/photomanager/tablets/$user/$year/$month/$day/$hour" ]
+            then
+                cd /photomanager/tablets/$user/$year/$month/$day
                 mkdir $hour
             fi
 
@@ -67,6 +103,12 @@ if [ -f  $file ]
             then
                 # copy image to new dir
                 cp $file /photomanager/smartphones/$user/$year/$month/$day/$hour/$name
+            fi
+
+            if [ -d "/photomanager/tablets/$user/$year/$month/$day/$hour" ]
+            then
+                # copy image to new dir
+                cp $file /photomanager/tablets/$user/$year/$month/$day/$hour/$name
             fi
 
             if [ -f "/photomanager/smartphones/$user/$year/$month/$day/$hour/$name" ]
@@ -81,8 +123,25 @@ if [ -f  $file ]
                 comment=$(echo "${comment/ /}")
 
                 if [ "$comment" == "photomanager" ]; then
-                    cd  /var/www/html/code
+                    cd  /var/www/html/photomanager
                     artisan=$(php artisan smartphoneImage:save $image_id "/photomanager/smartphones/$user/$year/$month/$day/$hour/$name" 2>&1)
+                fi
+            fi
+
+            if [ -f "/photomanager/tablets/$user/$year/$month/$day/$hour/$name" ]
+            then
+                # Optimize image
+                cd /photomanager/tablets/$user/$year/$month/$day/$hour/
+                sudo convert $name -quality 70 -resize 1200 -strip -set comment "photomanager" $name
+                
+                 # Know if the file was optimized
+                comment=$(identify -verbose $name | grep 'comment: photomanager')
+                comment=$(echo "$comment" | cut -d ":" -f2)
+                comment=$(echo "${comment/ /}")
+
+                if [ "$comment" == "photomanager" ]; then
+                    cd  /var/www/html/photomanager
+                    artisan=$(php artisan tabletImage:save $image_id "/photomanager/tablets/$user/$year/$month/$day/$hour/$name" 2>&1)
                 fi
             fi
         fi
