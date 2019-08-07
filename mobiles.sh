@@ -1,5 +1,6 @@
 #!/bin/bash
 file=$1
+image_id=$2
 
 # If the file exists it have to continue
 if [ -f  $file ]
@@ -66,6 +67,23 @@ if [ -f  $file ]
             then
                 # copy image to new dir
                 cp $file /photomanager/smartphones/$user/$year/$month/$day/$hour/$name
+            fi
+
+            if [ -f "/photomanager/smartphones/$user/$year/$month/$day/$hour/$name" ]
+            then
+                # Optimize image
+                cd /photomanager/smartphones/$user/$year/$month/$day/$hour/
+                sudo convert $name -quality 70 -resize 768 -strip -set comment "photomanager" $name
+                
+                 # Know if the file was optimized
+                comment=$(identify -verbose $name | grep 'comment: photomanager')
+                comment=$(echo "$comment" | cut -d ":" -f2)
+                comment=$(echo "${comment/ /}")
+
+                if [ "$comment" == "photomanager" ]; then
+                    cd  /var/www/html/code
+                    artisan=$(php artisan smartphoneImage:save $image_id "/photomanager/smartphones/$user/$year/$month/$day/$hour/$name" 2>&1)
+                fi
             fi
         fi
 fi
